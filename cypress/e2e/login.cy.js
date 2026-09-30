@@ -4,7 +4,7 @@ describe('Login no hub de leitura', () => {
 
   beforeEach(() => {
     cy.visit('login.html')
-    cy.setCookie('jwt_education_shown', 'true') 
+    cy.setCookie('jwt_education_shown', 'true')
   });
 
   it('Deve fazer login com sucesso com usuário comum - usando comando customizado', () => {
@@ -12,9 +12,38 @@ describe('Login no hub de leitura', () => {
     cy.get('h4').should('contain', 'Olá')
   })
 
-  it.only('Deve fazer login com sucesso com usuário admin - usando comando customizado', () => {
+  it('Deve fazer login com sucesso com usuário admin - usando comando customizado', () => {
     cy.login(Cypress.env('ADMIN_EMAIL'), Cypress.env('ADMIN_SENHA'))
     cy.get('h1').should('contain', 'Painel Administrativo')
+  })
+
+  it('Deve fazer login com sucesso com usuário comum - via api', () => {
+    cy.request({
+      method: 'POST',
+      url: 'api/login',
+      body: {
+        email: 'usuario@teste.com',
+        password: 'user123'
+      }
+    }).then((response) => {
+      expect(response.status).to.eq(200)
+
+      window.localStorage.setItem('authToken', response.body.token)
+      window.localStorage.setItem('isAdmin', false)
+      window.localStorage.setItem('userId', response.body.id)
+      window.localStorage.setItem('userName', 'Sabine')
+
+      cy.visit('dashboard.html')
+      cy.get('h4').should('contain', 'Olá')
+    })
+  })
+
+  it('Deve fazer login com sucesso com usuário comum - setando o token', () => {
+    const token = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ1c3VhcmlvQHRlc3RlLmNvbSIsImlzQWRtaW4iOmZhbHNlLCJpYXQiOjE3OTA2MDUxNzgsImV4cCI6MTc5MDYzMzk3OH0.2uJH4vJt1agMX_x6GmuBRJHPsnCzC_QcMsQhT5A1SSU'
+    window.localStorage.setItem('authToken', token)
+
+    cy.visit('dashboard.html')
+    cy.get('h4').should('contain', 'Olá')
   })
 
   it('Deve fazer login com sucesso com usuário comum - usando intercept', () => {
